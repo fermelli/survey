@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Survey</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- MODAL-COMPONENT -->
+    <template id="modal-component">
+        <div class="modal" v-show="isOpen">
+            <div class="modal-box" :class="{ in: isOpen, out: out }" @animationend="emitClose">
+                <div class="modal-head">
+                    <h3 class="modal-title">{{ title }}</h3>
+                    <button class="btn btn-close" @click="close"><i class="material-icons">close</i></button>
+                </div>
+                <div class="modal-body">
+                    <slot></slot>
+                </div>
+            </div>
+            <snackbar-component text="Debe respender todas las preguntas" :show-snackbar="showSnackbar"
+                @hide-snackbar="$emit('hide-snackbar')" />
+        </div>
+    </template>
+
+    <!-- SURVEY-COMPONENT -->
+    <template id="survey-page">
+        <div class="page" v-show="pageNumber === activePage">
+            <div class="page-head">
+                <h3 class="page-title">{{ pageNumber }}. {{ page.title }}</h3>
+                <p class="page-description">{{ page.description }}</p>
+            </div>
+            <div class="page-body">
+                <div class="page-column">
+                    <div class="col space"></div>
+                    <div class="col column-text" v-for="column in page.columns" :key="column.value">{{ column.text }}
+                    </div>
+                </div>
+                <div class="page-row" v-for="(row, i) in page.rows" :key="row.value + '-' + i">
+                    <div class="col question">{{ row.text }}</div>
+                    <input-radio v-for="(column, j) in page.columns" :key="column.value" :column="column" :row="row"
+                        :id=`${row.value}${i}${j}` v-model="model[page.name][row.value]" />
+                </div>
+            </div>
+            <div class="page-actions">
+                <button class="btn btn-border btn-previous" v-if="pageNumber > 1"
+                    @click="$emit('previous-page')">Previous</button>
+                <button class="btn btn-border btn-next" v-if="pageNumber < numberOfPages"
+                    @click="emitNextPage">Next</button>
+                <button class="btn btn-border btn-complete" v-else>Complete</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- INPUT-RADIO -->
+    <template id="input-radio">
+        <div class="col answer">
+            <label class="label-answer" :for="id">
+                <input type="radio" :id="id" :value="column.value" :name="row.value"
+                    @change="$emit('change', $event.target.value)">
+                <span class="label-text">{{ column.text }}</span>
+            </label>
+        </div>
+    </template>
+
+    <!-- SNACKBAR -->
+    <template id="snackbar-component">
+        <div class="snackbar-container" v-show="showSnackbar"
+            :class="{ 'snackbar-in': showSnackbar && show, 'snackbar-out ': !show }" @animationend="animationEnd">
+            <div class="snackbar-text">
+                <span>{{ text }}</span>
+            </div>
+            <slot></slot>
+        </div>
+    </template>
+
+    <!-- APP -->
+    <div id="app">
+        <button class="btn btn-open" @click="openModal">Open</button>
+        <modal-component title="Título modal" :is-open="isOpen" @close-modal="closeModal" :show-snackbar="showSnackbar"
+            @hide-snackbar="showSnackbar = false">
+            <survey-page v-for="(page, index) in pages" :key="page.id" :page="page" :page-number="index + 1"
+                :number-of-pages="pages.length" :active-page="activePage" @previous-page="activePage --"
+                @next-page="activePage ++" @show-snackbar="showSnackbar = true" />
+        </modal-component>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
